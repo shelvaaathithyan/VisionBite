@@ -1,4 +1,6 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Scan } from 'lucide-react';
 
 interface HeaderProps {
   username?: string;
@@ -7,6 +9,8 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ username, role, onLogout }) => {
+    const navigate = useNavigate();
+
   const roleStyles =
     role === 'admin'
       ? 'bg-purple-500/20 text-purple-200 border-purple-400/30'
@@ -24,6 +28,14 @@ export const Header: React.FC<HeaderProps> = ({ username, role, onLogout }) => {
         </div>
 
         <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/visionbite')}
+                      className="flex items-center gap-2 rounded-xl border border-blue-400/35 bg-blue-500/15 px-4 py-2 text-sm font-semibold text-blue-100 transition hover:bg-blue-500/25 hover:scale-[1.02]"
+                    >
+                      <Scan size={16} />
+                      VisionBite AI
+                    </button>
           <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${roleStyles}`}>
             {role}
           </span>

@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import connectDB from './config/database.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
+import customerRoutes from './routes/customer.js';
+import foodRoutes from './routes/food.js';
+import orderRoutes from './routes/order.js';
 
 dotenv.config();
 
@@ -19,6 +22,9 @@ connectDB();
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/food', foodRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

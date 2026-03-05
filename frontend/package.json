@@ -9,13 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "axios": "^1.6.2",
+    "face-api.js": "^0.22.2",
     "framer-motion": "^12.34.3",
+    "lucide-react": "^0.577.0",
     "ogl": "^1.0.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.0",
-    "three": "^0.183.1",
+    "three": "^0.183.2",
     "vanta": "^0.5.24"
   },
   "devDependencies": {

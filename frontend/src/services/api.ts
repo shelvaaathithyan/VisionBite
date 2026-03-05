@@ -33,4 +33,31 @@ export const adminService = {
   getApprovedStaff: () => api.get('/admin/approved-staff'),
 };
 
+export const customerService = {
+  enrollCustomer: (data: any) => api.post('/customers/enroll', data),
+  getAllCustomers: () => api.get('/customers'),
+  recognizeCustomer: (faceDescriptor: number[]) => 
+    api.post('/customers/recognize', { faceDescriptor }),
+  getRecommendations: (customerId: string, mood: string) =>
+    api.post('/customers/recommendations', { customerId, mood }),
+  updateCustomer: (id: string, data: any) => api.put(`/customers/${id}`, data),
+  deleteCustomer: (id: string) => api.delete(`/customers/${id}`),
+};
+
+export const foodService = {
+  getAllFoodItems: (params?: any) => api.get('/food', { params }),
+  createFoodItem: (data: any) => api.post('/food', data),
+  updateFoodItem: (id: string, data: any) => api.put(`/food/${id}`, data),
+  deleteFoodItem: (id: string) => api.delete(`/food/${id}`),
+};
+
+export const orderService = {
+  createOrder: (data: any) => api.post('/orders', data),
+  getAllOrders: (params?: any) => api.get('/orders', { params }),
+  getOrderById: (id: string) => api.get(`/orders/${id}`),
+  updateOrderStatus: (id: string, status: string) =>
+    api.put(`/orders/${id}/status`, { status }),
+  getCustomerOrders: (customerId: string) => api.get(`/orders/customer/${customerId}`),
+};
+
 export default api;

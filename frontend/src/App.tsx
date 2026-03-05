@@ -5,6 +5,7 @@ import { PrivateRoute } from './components/ProtectedRoutes';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
+import VisionBitePage from './pages/VisionBitePage';
 import './index.css';
 
 export const App: React.FC = () => {
@@ -23,6 +24,14 @@ export const App: React.FC = () => {
               </PrivateRoute>
             }
           />
+                    <Route
+                      path="/visionbite"
+                      element={
+                        <PrivateRoute>
+                          <VisionBitePage />
+                        </PrivateRoute>
+                      }
+                    />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>

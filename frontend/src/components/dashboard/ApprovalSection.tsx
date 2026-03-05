@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { PendingUser } from '../../types';
+import Interactive3DModel from './Interactive3DModel';
 
 interface ApprovalSectionProps {
   users: PendingUser[];
@@ -8,6 +9,7 @@ interface ApprovalSectionProps {
   processingId: string | null;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  userName?: string;
 }
 
 const Spinner: React.FC = () => (
@@ -20,26 +22,41 @@ export const ApprovalSection: React.FC<ApprovalSectionProps> = ({
   processingId,
   onApprove,
   onReject,
+  userName = 'Admin',
 }) => {
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-xl shadow-slate-950/35 backdrop-blur-sm sm:p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">Staff Approval Management</h2>
-        <span className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-300">
-          Pending: {users.length}
-        </span>
-      </div>
+    <section className="relative rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl shadow-slate-950/35 backdrop-blur-sm overflow-hidden">
+      {/* 3D Model Background - Only show when no pending users */}
+      {users.length === 0 && !isLoading && (
+        <div className="absolute inset-0 opacity-80">
+          <Interactive3DModel 
+            modelPath="/model.glb"
+            userName={userName}
+            scale={1.8}
+          />
+        </div>
+      )}
 
-      {isLoading ? (
-        <div className="flex min-h-40 items-center justify-center gap-3 text-slate-300">
-          <Spinner />
-          <span>Loading pending staff...</span>
+      {/* Content Layer */}
+      <div className="relative z-10 p-5 sm:p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-white">Staff Approval Management</h2>
+          <span className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-300">
+            Pending: {users.length}
+          </span>
         </div>
-      ) : users.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-700 bg-slate-800/40 p-8 text-center text-slate-300">
-          No pending staff approvals.
-        </div>
-      ) : (
+
+        {isLoading ? (
+          <div className="flex min-h-40 items-center justify-center gap-3 text-slate-300">
+            <Spinner />
+            <span>Loading pending staff...</span>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-700 bg-slate-800/50 backdrop-blur-sm p-8 text-center text-slate-300 min-h-[32rem]">
+            <p className="text-lg">No pending staff approvals.</p>
+            <p className="text-sm text-slate-400 mt-2">Your AI assistant is here to help!</p>
+          </div>
+        ) : (
         <div className="space-y-3">
           {users.map((pendingUser, index) => {
             const isProcessing = processingId === pendingUser._id;
@@ -86,7 +103,8 @@ export const ApprovalSection: React.FC<ApprovalSectionProps> = ({
             );
           })}
         </div>
-      )}
+        )}
+      </div>
     </section>
   );
 };

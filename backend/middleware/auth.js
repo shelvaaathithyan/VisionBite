@@ -25,3 +25,7 @@ export const adminMiddleware = (req, res, next) => {
   }
   next();
 };
+
+// Aliases for different naming conventions
+export const protect = authMiddleware;
+export const adminOnly = adminMiddleware;
