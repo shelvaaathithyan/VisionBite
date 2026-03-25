@@ -27,7 +27,7 @@ export const ApprovalSection: React.FC<ApprovalSectionProps> = ({
       <div className="relative z-10 flex h-full flex-col p-5 sm:p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-2xl font-semibold text-white">Staff Approval Management</h2>
-          <span className="rounded-lg border border-slate-500/30 bg-transparent px-2 py-1 text-sm text-slate-300">
+          <span className="rounded-lg border border-slate-500/30 bg-transparent px-3 py-1.5 text-base text-slate-200">
             Pending: {users.length}
           </span>
         </div>
@@ -58,7 +58,7 @@ export const ApprovalSection: React.FC<ApprovalSectionProps> = ({
                   <div>
                     <p className="text-xl font-semibold text-slate-100">{pendingUser.name}</p>
                     <p className="text-lg text-slate-300">{pendingUser.email}</p>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="mt-1 text-base text-slate-300">
                       Registered: {new Date(pendingUser.createdAt).toLocaleDateString()}
                     </p>
                   </div>

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { PrivateRoute, StaffRoute, UserOnlyRoute } from './components/ProtectedRoutes';
+import { AppLoadingScreen } from './components/AppLoadingScreen';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -10,6 +11,16 @@ import UserMenuPage from './pages/UserMenuPage';
 import './index.css';
 
 export const App: React.FC = () => {
+  const [isBootComplete, setIsBootComplete] = useState(false);
+
+  const handleBootComplete = useCallback(() => {
+    setIsBootComplete(true);
+  }, []);
+
+  if (!isBootComplete) {
+    return <AppLoadingScreen onComplete={handleBootComplete} />;
+  }
+
   return (
     <Router>
       <AuthProvider>

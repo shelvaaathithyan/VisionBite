@@ -39,7 +39,7 @@ export const Header: React.FC<HeaderProps> = ({ username, role }) => {
         <div>
           <p className="text-xl font-medium text-blue-200/90 sm:text-2xl">VisionBite</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl" style={{ fontFamily: "Bungee" }}>Dashboard</h1>
-          <p className="mt-2 text-sm text-slate-300">
+          <p className="mt-2 text-base text-slate-200 sm:text-lg">
             Welcome back, <span className="font-semibold text-slate-100">{username || 'User'}</span>
           </p>
         </div>

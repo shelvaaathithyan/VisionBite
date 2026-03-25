@@ -256,7 +256,7 @@ export const DashboardPage: React.FC = () => {
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 24 }}
-              className={`rounded-xl border px-4 py-3 text-sm font-medium shadow-xl ${
+              className={`rounded-xl border px-4 py-3 text-base font-medium shadow-xl ${
                 toast.type === 'success'
                   ? 'border-emerald-400/35 bg-emerald-500/20 text-emerald-100'
                   : 'border-rose-400/35 bg-rose-500/20 text-rose-100'
