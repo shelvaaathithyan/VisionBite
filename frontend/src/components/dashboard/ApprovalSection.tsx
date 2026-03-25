@@ -22,25 +22,24 @@ export const ApprovalSection: React.FC<ApprovalSectionProps> = ({
   onReject,
 }) => {
   return (
-    <section className="relative rounded-2xl border border-slate-500/30 bg-transparent backdrop-blur-sm shadow-xl shadow-slate-950/10 overflow-hidden">
+    <section className="relative h-full overflow-hidden rounded-2xl border border-slate-500/30 bg-transparent shadow-xl shadow-slate-950/10 backdrop-blur-sm">
       {/* Content Layer */}
-      <div className="relative z-10 p-5 sm:p-6">
+      <div className="relative z-10 flex h-full flex-col p-5 sm:p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Staff Approval Management</h2>
-          <span className="rounded-lg border border-slate-500/30 bg-transparent px-2 py-1 text-xs text-slate-300">
+          <h2 className="text-2xl font-semibold text-white">Staff Approval Management</h2>
+          <span className="rounded-lg border border-slate-500/30 bg-transparent px-2 py-1 text-sm text-slate-300">
             Pending: {users.length}
           </span>
         </div>
 
         {isLoading ? (
-          <div className="flex min-h-40 items-center justify-center gap-3 text-slate-300">
+          <div className="flex min-h-40 flex-1 items-center justify-center gap-3 text-slate-300">
             <Spinner />
             <span>Loading pending staff...</span>
           </div>
         ) : users.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-500/30 bg-transparent backdrop-blur-sm p-8 text-center text-slate-300 min-h-[32rem]">
-            <p className="text-lg">No pending staff approvals.</p>
-            <p className="text-sm text-slate-400 mt-2">Your AI assistant is here to help!</p>
+          <div className="flex min-h-[20rem] flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-500/30 bg-transparent p-8 text-center text-slate-300">
+            <p className="text-4xl">No pending staff approvals!!</p>
           </div>
         ) : (
         <div className="space-y-3">
@@ -57,9 +56,9 @@ export const ApprovalSection: React.FC<ApprovalSectionProps> = ({
               >
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <p className="font-semibold text-slate-100">{pendingUser.name}</p>
-                    <p className="text-sm text-slate-300">{pendingUser.email}</p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="text-xl font-semibold text-slate-100">{pendingUser.name}</p>
+                    <p className="text-lg text-slate-300">{pendingUser.email}</p>
+                    <p className="mt-1 text-sm text-slate-400">
                       Registered: {new Date(pendingUser.createdAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -69,7 +68,7 @@ export const ApprovalSection: React.FC<ApprovalSectionProps> = ({
                       type="button"
                       onClick={() => onApprove(pendingUser._id)}
                       disabled={isProcessing}
-                      className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-lg font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isProcessing ? <Spinner /> : null}
                       Approve
@@ -78,7 +77,7 @@ export const ApprovalSection: React.FC<ApprovalSectionProps> = ({
                       type="button"
                       onClick={() => onReject(pendingUser._id)}
                       disabled={isProcessing}
-                      className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2.5 text-lg font-semibold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isProcessing ? <Spinner /> : null}
                       Reject

@@ -56,7 +56,7 @@ const PulseIcon = () => (
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [loadingPending, setLoadingPending] = useState(false);
   const [loadingApproved, setLoadingApproved] = useState(false);
@@ -134,11 +134,6 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   const totalStaff = isAdmin ? pendingUsers.length + approvedStaffCount : 'Restricted';
   const approvedStaff = isAdmin ? approvedStaffCount : user?.isApproved ? 1 : 0;
   const activeUsers = isAdmin ? approvedStaffCount + 1 : user?.isApproved ? 1 : 0;
@@ -209,21 +204,21 @@ export const DashboardPage: React.FC = () => {
         isApproved={user?.isApproved}
       />
 
-      <section className="rounded-2xl border border-slate-500/30 bg-transparent p-5 shadow-xl shadow-slate-950/10 backdrop-blur-md">
-        <h2 className="text-lg font-semibold text-white">Quick Actions</h2>
+      <section className="rounded-2xl border border-slate-500/30 bg-transparent p-5 shadow-xl shadow-slate-950/10">
+        <h2 className="text-2xl font-semibold text-white">Quick Actions</h2>
         <div className="mt-4 space-y-2">
           <button
             type="button"
             onClick={fetchDashboardData}
             disabled={!isAdmin || isLoadingStats}
-            className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-xl bg-blue-600 px-4 py-3 text-xl font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoadingStats && isAdmin ? 'Refreshing...' : 'Refresh Dashboard'}
           </button>
           <button
             type="button"
             onClick={() => navigate('/login')}
-            className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
+            className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-xl font-semibold text-slate-200 transition hover:bg-slate-700"
           >
             Go to Login
           </button>
@@ -235,7 +230,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <>
       <DashboardLayout
-        header={<Header username={user?.name} role={isAdmin ? 'admin' : 'staff'} onLogout={handleLogout} />}
+        header={<Header username={user?.name} role={isAdmin ? 'admin' : 'staff'} />}
         kpis={<KPICards items={kpis} />}
         mainContent={
           isAdmin ? (

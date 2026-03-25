@@ -9,6 +9,7 @@ const EnrollCustomer: React.FC = () => {
     name: '',
     phone: '',
     email: '',
+    password: '',
     preferences: [] as string[],
     dietaryRestrictions: [] as string[],
   });
@@ -55,6 +56,16 @@ const EnrollCustomer: React.FC = () => {
       return;
     }
 
+    if (!formData.phone || !formData.email || !formData.password) {
+      setMessage({ type: 'error', text: 'Phone, email, and password are required' });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setMessage({ type: 'error', text: 'Password must be at least 6 characters' });
+      return;
+    }
+
     if (!faceDescriptor) {
       setMessage({ type: 'error', text: 'Please capture face first' });
       return;
@@ -74,6 +85,7 @@ const EnrollCustomer: React.FC = () => {
         name: '',
         phone: '',
         email: '',
+        password: '',
         preferences: [],
         dietaryRestrictions: [],
       });
@@ -89,18 +101,18 @@ const EnrollCustomer: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="rounded-2xl border border-slate-500/30 bg-transparent p-6 shadow-xl shadow-slate-950/10 backdrop-blur-sm">
       <div className="flex items-center gap-3 mb-6">
-        <UserPlus className="text-blue-500" size={28} />
-        <h2 className="text-2xl font-bold text-gray-800">Enroll New Customer</h2>
+        <UserPlus className="text-blue-300" size={28} />
+        <h2 className="text-4xl font-bold text-white">Enroll New Customer</h2>
       </div>
 
       {message.text && (
         <div
           className={`mb-4 p-4 rounded-lg ${
             message.type === 'success'
-              ? 'bg-green-100 border border-green-400 text-green-700'
-              : 'bg-red-100 border border-red-400 text-red-700'
+              ? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-100'
+              : 'border border-rose-400/35 bg-rose-500/20 text-rose-100'
           }`}
         >
           {message.text}
@@ -111,7 +123,7 @@ const EnrollCustomer: React.FC = () => {
         {/* Basic Info */}
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-base font-medium text-slate-300">
               Name *
             </label>
             <input
@@ -119,41 +131,58 @@ const EnrollCustomer: React.FC = () => {
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full rounded-lg border border-slate-600/70 bg-slate-900/60 px-4 py-2 text-slate-100 focus:border-blue-400 focus:outline-none"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone (Optional)
+            <label className="mb-2 block text-base font-medium text-slate-300">
+              Phone *
             </label>
             <input
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full rounded-lg border border-slate-600/70 bg-slate-900/60 px-4 py-2 text-slate-100 focus:border-blue-400 focus:outline-none"
+              required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email (Optional)
+            <label className="mb-2 block text-base font-medium text-slate-300">
+              Email *
             </label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full rounded-lg border border-slate-600/70 bg-slate-900/60 px-4 py-2 text-slate-100 focus:border-blue-400 focus:outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-base font-medium text-slate-300">
+              Password *
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              className="w-full rounded-lg border border-slate-600/70 bg-slate-900/60 px-4 py-2 text-slate-100 focus:border-blue-400 focus:outline-none"
+              minLength={6}
+              required
             />
           </div>
         </div>
 
         {/* Food Preferences */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-base font-medium text-slate-300">
             Food Preferences
           </label>
           <div className="flex flex-wrap gap-2">
@@ -164,8 +193,8 @@ const EnrollCustomer: React.FC = () => {
                 onClick={() => handlePreferenceToggle(category)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition ${
                   formData.preferences.includes(category)
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                 }`}
               >
                 {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -176,7 +205,7 @@ const EnrollCustomer: React.FC = () => {
 
         {/* Dietary Restrictions */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-base font-medium text-slate-300">
             Dietary Restrictions
           </label>
           <div className="flex flex-wrap gap-2">
@@ -187,8 +216,8 @@ const EnrollCustomer: React.FC = () => {
                 onClick={() => handleRestrictionToggle(restriction)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition ${
                   formData.dietaryRestrictions.includes(restriction)
-                    ? 'bg-red-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-rose-600 text-white'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                 }`}
               >
                 {restriction.charAt(0).toUpperCase() + restriction.slice(1)}
@@ -199,7 +228,7 @@ const EnrollCustomer: React.FC = () => {
 
         {/* Face Capture */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-base font-medium text-slate-300">
             Face Recognition *
           </label>
           <button
@@ -207,8 +236,8 @@ const EnrollCustomer: React.FC = () => {
             onClick={() => setShowCamera(true)}
             className={`w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold ${
               faceDescriptor
-                ? 'bg-green-500 text-white'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-blue-600 hover:bg-blue-500 text-white'
             }`}
           >
             <Camera size={20} />
@@ -223,8 +252,8 @@ const EnrollCustomer: React.FC = () => {
             disabled={capturing || !faceDescriptor}
             className={`flex-1 md:flex-none px-8 py-3 rounded-lg font-semibold ${
               capturing || !faceDescriptor
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-green-500 hover:bg-green-600 text-white'
+                ? 'cursor-not-allowed bg-slate-700 text-slate-500'
+                : 'bg-emerald-600 text-white hover:bg-emerald-500'
             }`}
           >
             {capturing ? 'Enrolling...' : 'Enroll Customer'}

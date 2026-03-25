@@ -6,10 +6,9 @@ import coffeeShopVideo from '../../Ass/coffee-shop.3840x2160.mp4';
 interface HeaderProps {
   username?: string;
   role: 'admin' | 'staff';
-  onLogout: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ username, role, onLogout }) => {
+export const Header: React.FC<HeaderProps> = ({ username, role }) => {
   const navigate = useNavigate();
   const isAdmin = role === 'admin';
 
@@ -38,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({ username, role, onLogout }) => {
 
       <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-blue-200/80">VisionBite</p>
+          <p className="text-xl font-medium text-blue-200/90 sm:text-2xl">VisionBite</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl" style={{ fontFamily: "Bungee" }}>Dashboard</h1>
           <p className="mt-2 text-sm text-slate-300">
             Welcome back, <span className="font-semibold text-slate-100">{username || 'User'}</span>
@@ -49,17 +48,10 @@ export const Header: React.FC<HeaderProps> = ({ username, role, onLogout }) => {
           <button
             type="button"
             onClick={() => navigate('/visionbite')}
-            className="flex items-center gap-2 rounded-xl border border-slate-400/40 bg-transparent px-4 py-2 text-sm font-semibold text-slate-100 transition hover:bg-slate-500/10 hover:scale-[1.02]"
+            className="flex items-center gap-2 rounded-xl border border-slate-400/40 bg-transparent px-6 py-3 text-lg font-semibold text-slate-100 transition hover:bg-slate-500/10 hover:scale-[1.02] sm:text-xl"
           >
-            <Scan size={16} />
+            <Scan size={20} />
             VisionBite AI
-          </button>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="rounded-xl border border-slate-400/40 bg-transparent px-4 py-2 text-sm font-semibold text-slate-100 transition hover:bg-slate-500/10 hover:scale-[1.02]"
-          >
-            Logout
           </button>
         </div>
       </div>

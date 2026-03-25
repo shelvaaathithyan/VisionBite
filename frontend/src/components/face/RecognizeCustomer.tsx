@@ -25,6 +25,7 @@ interface UnknownFaceForm {
   name: string;
   phone: string;
   email: string;
+  password: string;
   isSaving: boolean;
 }
 
@@ -51,6 +52,7 @@ const RecognizeCustomer: React.FC = () => {
         name: '',
         phone: '',
         email: '',
+        password: '',
         isSaving: false,
       };
     }
@@ -138,12 +140,29 @@ const RecognizeCustomer: React.FC = () => {
       return;
     }
 
+    if (!form.phone.trim() || !form.email.trim() || !form.password) {
+      setMessage({
+        type: 'error',
+        text: `Phone, email, and password are required for Face #${unknownFace.index + 1}`,
+      });
+      return;
+    }
+
+    if (form.password.length < 6) {
+      setMessage({
+        type: 'error',
+        text: `Password must be at least 6 characters for Face #${unknownFace.index + 1}`,
+      });
+      return;
+    }
+
     try {
       updateUnknownForm(unknownFace.index, { isSaving: true });
       await customerService.enrollCustomer({
         name: form.name.trim(),
         phone: form.phone.trim(),
         email: form.email.trim(),
+        password: form.password,
         preferences: [],
         dietaryRestrictions: [],
         faceDescriptor: unknownFace.descriptor,
@@ -181,20 +200,20 @@ const RecognizeCustomer: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Recognition Section */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="rounded-2xl border border-slate-500/30 bg-transparent p-6 shadow-xl shadow-slate-950/10 backdrop-blur-sm">
         <div className="flex items-center gap-3 mb-6">
-          <Scan className="text-purple-500" size={28} />
-          <h2 className="text-2xl font-bold text-gray-800">Recognize Group Customers</h2>
+          <Scan className="text-blue-300" size={28} />
+          <h2 className="text-4xl font-bold text-white">Recognize Group Customers</h2>
         </div>
 
         {message.text && (
           <div
             className={`mb-4 p-4 rounded-lg ${
               message.type === 'success'
-                ? 'bg-green-100 border border-green-400 text-green-700'
+                ? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-100'
                 : message.type === 'warning'
-                ? 'bg-yellow-100 border border-yellow-400 text-yellow-700'
-                : 'bg-red-100 border border-red-400 text-red-700'
+                ? 'border border-amber-400/35 bg-amber-500/20 text-amber-100'
+                : 'border border-rose-400/35 bg-rose-500/20 text-rose-100'
             }`}
           >
             {message.text}
@@ -204,7 +223,7 @@ const RecognizeCustomer: React.FC = () => {
         <button
           onClick={() => setShowCamera(true)}
           disabled={recognizing}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-semibold disabled:bg-gray-300"
+          className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-xl font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Users size={20} />
           {recognizing ? 'Recognizing Group...' : 'Start Group Recognition'}
@@ -214,7 +233,7 @@ const RecognizeCustomer: React.FC = () => {
           <button
             type="button"
             onClick={handleRescanNow}
-            className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700"
+            className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-xl font-semibold text-white transition hover:bg-emerald-500"
           >
             <Scan size={20} />
             Rescan Now
@@ -222,18 +241,18 @@ const RecognizeCustomer: React.FC = () => {
         )}
 
         {totalRecognized > 0 && (
-          <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+          <div className="mt-6 rounded-xl border border-blue-400/35 bg-blue-500/20 p-3 text-lg text-blue-100">
             Recognized customers in current scan: {totalRecognized}
           </div>
         )}
       </div>
 
       {groupResults.map((card) => (
-        <div key={card.recognition.customer.id} className="bg-white rounded-lg shadow-md p-6">
+        <div key={card.recognition.customer.id} className="rounded-2xl border border-slate-500/30 bg-transparent p-6 shadow-xl shadow-slate-950/10 backdrop-blur-sm">
           <div className="mb-6 grid gap-6 md:grid-cols-2">
-            <div className="rounded-lg border border-gray-200 p-4">
-              <h3 className="mb-3 text-lg font-semibold">Customer Information</h3>
-              <div className="space-y-2 text-sm">
+            <div className="rounded-xl border border-slate-600/50 p-4">
+              <h3 className="mb-3 text-2xl font-semibold text-white">Customer Information</h3>
+              <div className="space-y-2 text-lg text-slate-200">
                 <p><strong>Name:</strong> {card.recognition.customer.name}</p>
                 <p><strong>Visits:</strong> {card.recognition.customer.visitCount}</p>
                 <p><strong>Detected Mood:</strong> <span className="capitalize">{card.detectedMood}</span></p>
@@ -259,21 +278,21 @@ const RecognizeCustomer: React.FC = () => {
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-200 p-4">
-              <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+            <div className="rounded-xl border border-slate-600/50 p-4">
+              <h3 className="mb-3 flex items-center gap-2 text-2xl font-semibold text-white">
                 <History size={20} />
                 Recent Orders
               </h3>
               <div className="max-h-56 space-y-2 overflow-y-auto">
                 {card.recognition.orderHistory.length === 0 ? (
-                  <p className="text-sm text-gray-500">No previous orders</p>
+                  <p className="text-base text-slate-400">No previous orders</p>
                 ) : (
                   card.recognition.orderHistory.slice(0, 5).map((order) => (
-                    <div key={order._id} className="border-b pb-2 text-sm">
+                    <div key={order._id} className="border-b border-slate-700/60 pb-2 text-base text-slate-200">
                       <p className="font-medium">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </p>
-                      <p className="text-gray-600">
+                      <p className="text-slate-400">
                         {order.items.length} items - ${order.totalAmount.toFixed(2)}
                       </p>
                     </div>
@@ -284,28 +303,28 @@ const RecognizeCustomer: React.FC = () => {
           </div>
 
           <div>
-            <h3 className="mb-4 text-xl font-bold text-gray-800">
+            <h3 className="mb-4 text-3xl font-bold text-white">
               Personalized Recommendations for {card.recognition.customer.name}
-              <span className="ml-2 text-sm font-normal text-gray-500">
+              <span className="ml-2 text-lg font-normal text-slate-400">
                 Based on mood: <span className="font-semibold capitalize">{card.detectedMood}</span>
               </span>
             </h3>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {card.recommendations.map((item) => (
-                <div key={item._id} className="rounded-lg border border-gray-200 p-4 transition hover:shadow-md">
+                <div key={item._id} className="rounded-xl border border-slate-600/50 bg-slate-950/30 p-4 transition hover:border-slate-400/60">
                   <div className="mb-2 flex items-start justify-between">
-                    <h4 className="font-semibold text-gray-800">{item.name}</h4>
-                    <span className="text-lg font-bold text-blue-600">${item.price}</span>
+                    <h4 className="text-xl font-semibold text-slate-100">{item.name}</h4>
+                    <span className="text-2xl font-bold text-blue-300">${item.price}</span>
                   </div>
-                  <p className="mb-2 text-sm text-gray-600">{item.description}</p>
+                  <p className="mb-2 text-base text-slate-300">{item.description}</p>
                   <div className="flex flex-wrap gap-1">
-                    <span className="rounded bg-gray-100 px-2 py-1 text-xs">{item.category}</span>
+                    <span className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-100">{item.category}</span>
                     {item.isVegetarian && (
-                      <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-700">Vegetarian</span>
+                      <span className="rounded bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">Vegetarian</span>
                     )}
                     {item.spicyLevel > 0 && (
-                      <span className="rounded bg-red-100 px-2 py-1 text-xs text-red-700">🌶️ {item.spicyLevel}</span>
+                      <span className="rounded bg-rose-500/20 px-2 py-1 text-xs text-rose-200">Spicy {item.spicyLevel}</span>
                     )}
                   </div>
                 </div>
@@ -316,9 +335,9 @@ const RecognizeCustomer: React.FC = () => {
       ))}
 
       {unknownFaces.length > 0 && (
-        <div className="rounded-lg bg-white p-6 shadow-md">
-          <h3 className="mb-4 text-xl font-bold text-gray-800">Unknown Faces Detected</h3>
-          <p className="mb-4 text-sm text-gray-600">
+        <div className="rounded-2xl border border-slate-500/30 bg-transparent p-6 shadow-xl shadow-slate-950/10 backdrop-blur-sm">
+          <h3 className="mb-4 text-3xl font-bold text-white">Unknown Faces Detected</h3>
+          <p className="mb-4 text-lg text-slate-300">
             Enroll these customers now so the next scan can fetch their order history and recommendations.
           </p>
 
@@ -328,14 +347,15 @@ const RecognizeCustomer: React.FC = () => {
                 name: '',
                 phone: '',
                 email: '',
+                password: '',
                 isSaving: false,
               };
 
               return (
-                <div key={unknownFace.index} className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div key={unknownFace.index} className="rounded-xl border border-amber-400/35 bg-amber-500/10 p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h4 className="font-semibold text-amber-900">Face #{unknownFace.index + 1}</h4>
-                    <span className="rounded bg-amber-100 px-2 py-1 text-xs text-amber-800">
+                    <h4 className="text-xl font-semibold text-amber-100">Face #{unknownFace.index + 1}</h4>
+                    <span className="rounded bg-amber-500/20 px-2 py-1 text-xs text-amber-100">
                       Mood: {unknownFace.emotion}
                     </span>
                   </div>
@@ -346,27 +366,34 @@ const RecognizeCustomer: React.FC = () => {
                       placeholder="Customer name"
                       value={form.name}
                       onChange={(event) => updateUnknownForm(unknownFace.index, { name: event.target.value })}
-                      className="w-full rounded border border-amber-300 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
+                      className="w-full rounded border border-amber-300/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 focus:border-amber-300 focus:outline-none"
                     />
                     <input
                       type="text"
-                      placeholder="Phone (optional)"
+                      placeholder="Phone"
                       value={form.phone}
                       onChange={(event) => updateUnknownForm(unknownFace.index, { phone: event.target.value })}
-                      className="w-full rounded border border-amber-300 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
+                      className="w-full rounded border border-amber-300/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 focus:border-amber-300 focus:outline-none"
                     />
                     <input
                       type="email"
-                      placeholder="Email (optional)"
+                      placeholder="Email"
                       value={form.email}
                       onChange={(event) => updateUnknownForm(unknownFace.index, { email: event.target.value })}
-                      className="w-full rounded border border-amber-300 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
+                      className="w-full rounded border border-amber-300/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 focus:border-amber-300 focus:outline-none"
+                    />
+                    <input
+                      type="password"
+                      placeholder="Password (min 6 chars)"
+                      value={form.password}
+                      onChange={(event) => updateUnknownForm(unknownFace.index, { password: event.target.value })}
+                      className="w-full rounded border border-amber-300/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 focus:border-amber-300 focus:outline-none"
                     />
                     <button
                       type="button"
                       disabled={form.isSaving}
                       onClick={() => handleEnrollUnknownFace(unknownFace)}
-                      className="w-full rounded bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-70"
+                      className="w-full rounded-xl bg-amber-600 px-4 py-2 text-base font-semibold text-white transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       {form.isSaving ? 'Enrolling...' : 'Enroll This Customer'}
                     </button>
