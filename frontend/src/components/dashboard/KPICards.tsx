@@ -15,22 +15,39 @@ interface KPICardsProps {
 
 export const KPICards: React.FC<KPICardsProps> = ({ items }) => {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {items.map((item, index) => (
         <motion.article
           key={item.id}
-          className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-xl shadow-slate-950/35 backdrop-blur-sm"
+          className="group relative overflow-hidden rounded-lg border border-slate-600/40 bg-gradient-to-br from-slate-700/50 via-slate-800/50 to-slate-900/60 p-4 backdrop-blur-md shadow-xl shadow-slate-950/40 transition-all hover:border-slate-500/60 hover:shadow-lg hover:shadow-blue-500/5"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.08 + index * 0.05 }}
+          transition={{ duration: 0.3, delay: 0.05 + index * 0.05 }}
           whileHover={{ scale: 1.02, y: -2 }}
         >
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-300">{item.label}</p>
-            <div className="rounded-lg border border-slate-700 bg-slate-800 p-2 text-blue-200">{item.icon}</div>
+          {/* Metallic highlight overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+          {/* Content */}
+          <div className="relative z-10 flex flex-col gap-2">
+            {/* Label */}
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 group-hover:text-slate-300 transition-colors" style={{ fontFamily: 'BebasNeue', letterSpacing: '0.1em' }}>
+              {item.label}
+            </p>
+
+            {/* Value */}
+            <p className="text-3xl font-black tracking-tight text-white" style={{ fontFamily: 'BebasNeue' }}>
+              {item.value}
+            </p>
+
+            {/* Subtitle */}
+            {item.subtitle && (
+              <p className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors leading-tight">{item.subtitle}</p>
+            )}
           </div>
-          <p className="text-3xl font-bold tracking-tight text-white">{item.value}</p>
-          {item.subtitle && <p className="mt-1 text-xs text-slate-400">{item.subtitle}</p>}
+
+          {/* Bottom metallic accent edge */}
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-400/30 to-transparent group-hover:via-slate-300/40 transition-all" />
         </motion.article>
       ))}
     </div>

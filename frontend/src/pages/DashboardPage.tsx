@@ -209,7 +209,7 @@ export const DashboardPage: React.FC = () => {
         isApproved={user?.isApproved}
       />
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-xl shadow-slate-950/35 backdrop-blur-sm">
+      <section className="rounded-2xl border border-slate-500/30 bg-transparent p-5 shadow-xl shadow-slate-950/10 backdrop-blur-md">
         <h2 className="text-lg font-semibold text-white">Quick Actions</h2>
         <div className="mt-4 space-y-2">
           <button

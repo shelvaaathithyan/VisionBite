@@ -22,12 +22,12 @@ export const ApprovalSection: React.FC<ApprovalSectionProps> = ({
   onReject,
 }) => {
   return (
-    <section className="relative rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl shadow-slate-950/35 backdrop-blur-sm overflow-hidden">
+    <section className="relative rounded-2xl border border-slate-500/30 bg-transparent backdrop-blur-sm shadow-xl shadow-slate-950/10 overflow-hidden">
       {/* Content Layer */}
       <div className="relative z-10 p-5 sm:p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Staff Approval Management</h2>
-          <span className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-300">
+          <span className="rounded-lg border border-slate-500/30 bg-transparent px-2 py-1 text-xs text-slate-300">
             Pending: {users.length}
           </span>
         </div>
@@ -38,7 +38,7 @@ export const ApprovalSection: React.FC<ApprovalSectionProps> = ({
             <span>Loading pending staff...</span>
           </div>
         ) : users.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-700 bg-slate-800/50 backdrop-blur-sm p-8 text-center text-slate-300 min-h-[32rem]">
+          <div className="rounded-xl border border-dashed border-slate-500/30 bg-transparent backdrop-blur-sm p-8 text-center text-slate-300 min-h-[32rem]">
             <p className="text-lg">No pending staff approvals.</p>
             <p className="text-sm text-slate-400 mt-2">Your AI assistant is here to help!</p>
           </div>
@@ -50,7 +50,7 @@ export const ApprovalSection: React.FC<ApprovalSectionProps> = ({
             return (
               <motion.div
                 key={pendingUser._id}
-                className="rounded-xl border border-slate-800 bg-slate-950/35 p-4 transition hover:border-slate-600"
+                className="rounded-xl border border-slate-500/30 bg-transparent p-4 transition hover:border-slate-400/50 backdrop-blur-sm"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, delay: index * 0.03 }}
