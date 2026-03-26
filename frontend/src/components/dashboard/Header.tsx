@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Scan } from 'lucide-react';
-import coffeeShopVideo from '../../Ass/coffee-shop.3840x2160.mp4';
 
 interface HeaderProps {
   username?: string;
@@ -29,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({ username, role }) => {
             playsInline
             preload="metadata"
           >
-            <source src={coffeeShopVideo} type="video/mp4" />
+            <source src="/assets/coffee-shop.3840x2160.mp4" type="video/mp4" />
           </video>
           <div className="pointer-events-none absolute inset-0 bg-slate-950/60" />
         </>
