@@ -28,6 +28,126 @@ interface UnknownFaceForm {
   isSaving: boolean;
 }
 
+const inrFormatter = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatInr = (amount: number) => inrFormatter.format(amount);
+
+const LEGACY_ORDER_PRICE_MAP: Record<string, { name: string; inrPrice: number }> = {
+  '8.50': { name: 'Smoky Paneer Tikka', inrPrice: 120 },
+  '7.25': { name: 'Crispy Corn Pepper', inrPrice: 131 },
+  '7.95': { name: 'Garlic Herb Mushrooms', inrPrice: 142 },
+  '9.75': { name: 'Peri Peri Chicken Bites', inrPrice: 153 },
+  '6.90': { name: 'Classic Bruschetta', inrPrice: 164 },
+  '8.20': { name: 'Nacho Fiesta Bowl', inrPrice: 175 },
+  '10.25': { name: 'Spicy Buffalo Wings', inrPrice: 186 },
+  '8.15': { name: 'Avocado Hummus Platter', inrPrice: 197 },
+  '13.50': { name: 'Butter Chicken Rice Bowl', inrPrice: 208 },
+  '12.40': { name: 'Veggie Lasagna Slice', inrPrice: 219 },
+  '12.95': { name: 'Thai Green Curry Noodles', inrPrice: 230 },
+  '14.25': { name: 'Mushroom Truffle Pasta', inrPrice: 241 },
+  '15.75': { name: 'Grilled Herb Fish Fillet', inrPrice: 121 },
+  '12.70': { name: 'Paneer Butter Masala', inrPrice: 132 },
+  '13.20': { name: 'Chicken Shawarma Plate', inrPrice: 143 },
+  '11.95': { name: 'Mexican Burrito Supreme', inrPrice: 154 },
+  '11.60': { name: 'Teriyaki Tofu Stir Fry', inrPrice: 165 },
+  '12.80': { name: 'Classic Margherita Pizza', inrPrice: 176 },
+  '13.90': { name: 'Spicy Chicken Pizza', inrPrice: 187 },
+  '11.25': { name: 'Quinoa Power Bowl', inrPrice: 198 },
+  '6.75': { name: 'Classic Tiramisu Cup', inrPrice: 209 },
+  '5.95': { name: 'Double Chocolate Brownie', inrPrice: 220 },
+  '7.10': { name: 'Blueberry Cheesecake', inrPrice: 231 },
+  '6.40': { name: 'Mango Sticky Rice', inrPrice: 242 },
+  '6.80': { name: 'Vanilla Bean Panna Cotta', inrPrice: 122 },
+  '6.20': { name: 'Choco Hazelnut Sundae', inrPrice: 133 },
+  '6.50': { name: 'Caramel Apple Pie', inrPrice: 144 },
+  '4.90': { name: 'Pistachio Kulfi Stick', inrPrice: 155 },
+  '3.25': { name: 'Iced Americano', inrPrice: 166 },
+  '4.95': { name: 'Mocha Frappuccino', inrPrice: 177 },
+  '2.85': { name: 'Classic Masala Chai', inrPrice: 188 },
+  '3.60': { name: 'Fresh Mint Lemon Cooler', inrPrice: 199 },
+  '4.40': { name: 'Berry Kombucha Sparkle', inrPrice: 210 },
+  '5.50': { name: 'Salted Caramel Milkshake', inrPrice: 221 },
+  '3.10': { name: 'Tropical Coconut Water', inrPrice: 232 },
+  '3.90': { name: 'Spiced Tomato Soup Shot', inrPrice: 243 },
+  '3.95': { name: 'Herb Garlic Bread', inrPrice: 123 },
+  '4.60': { name: 'Crispy Waffle Fries', inrPrice: 134 },
+  '4.20': { name: 'Sauteed Butter Veggies', inrPrice: 145 },
+  '2.90': { name: 'Steamed Jasmine Rice', inrPrice: 156 },
+  '3.30': { name: 'Tangy Coleslaw Cup', inrPrice: 167 },
+  '4.35': { name: 'Roasted Baby Potatoes', inrPrice: 178 },
+  '4.75': { name: 'Classic Caesar Side Salad', inrPrice: 189 },
+  '4.55': { name: 'Spicy Kimchi Slaw', inrPrice: 200 },
+  '18.50': { name: 'Chef Special Platter One', inrPrice: 211 },
+  '20.95': { name: 'Chef Special Platter Two', inrPrice: 222 },
+  '16.75': { name: 'Weekend Brunch Signature', inrPrice: 233 },
+  '14.80': { name: 'Festival Sweet Sampler', inrPrice: 244 },
+  '13.65': { name: 'Midnight Craving Combo', inrPrice: 124 },
+  '15.40': { name: 'Detox Wellness Plate', inrPrice: 135 },
+};
+
+const getLegacyFallback = (price: number) => {
+  if (!Number.isFinite(price)) {
+    return null;
+  }
+
+  return LEGACY_ORDER_PRICE_MAP[price.toFixed(2)] || null;
+};
+
+const getOrderItemChips = (order: any) => {
+  const items = Array.isArray(order?.items) ? order.items : [];
+
+  return items
+    .map((item: any) => {
+      const foodItem = item?.foodItem;
+      const fallback = getLegacyFallback(Number(item?.price));
+      const name = typeof foodItem?.name === 'string'
+        ? foodItem.name
+        : fallback?.name || 'Menu Item';
+      const quantity = Number(item?.quantity || 0);
+      return quantity > 0 ? `${name} x${quantity}` : name;
+    })
+    .filter(Boolean)
+    .filter(Boolean);
+};
+
+const getCorrectOrderTotal = (order: any) => {
+  const items = Array.isArray(order?.items) ? order.items : [];
+
+  const computed = items.reduce((sum: number, item: any) => {
+    const quantity = Number(item?.quantity || 0);
+    if (quantity <= 0) {
+      return sum;
+    }
+
+    // Prefer latest populated menu price. For legacy orders with null refs, map old price to INR.
+    const currentPrice = Number(item?.foodItem?.price);
+    const fallbackPrice = Number(item?.price);
+    const legacyFallback = getLegacyFallback(fallbackPrice);
+    const unitPrice = Number.isFinite(currentPrice) && currentPrice > 0
+      ? currentPrice
+      : typeof legacyFallback?.inrPrice === 'number'
+        ? legacyFallback.inrPrice
+        : Number.isFinite(fallbackPrice) && fallbackPrice > 0
+          ? fallbackPrice
+          : 0;
+
+    return sum + unitPrice * quantity;
+  }, 0);
+
+  if (computed > 0) {
+    return computed;
+  }
+
+  const totalFallback = Number(order?.totalAmount || 0);
+  const mappedLegacyTotal = getLegacyFallback(totalFallback);
+  return mappedLegacyTotal?.inrPrice || totalFallback;
+};
+
 const RecognizeCustomer: React.FC = () => {
   const [showCamera, setShowCamera] = useState(false);
   const [recognizing, setRecognizing] = useState(false);
@@ -278,12 +398,31 @@ const RecognizeCustomer: React.FC = () => {
                 ) : (
                   card.recognition.orderHistory.slice(0, 5).map((order) => (
                     <div key={order._id} className="border-b border-slate-700/60 pb-2 text-base text-slate-200">
+                      {(() => {
+                        const itemChips = getOrderItemChips(order);
+                        return (
+                          <>
                       <p className="font-medium">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </p>
                       <p className="text-slate-400">
-                        {order.items.length} items - ${order.totalAmount.toFixed(2)}
+                        {order.items.length} item{order.items.length === 1 ? '' : 's'} - {formatInr(getCorrectOrderTotal(order))}
                       </p>
+                      {itemChips.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {itemChips.map((chip) => (
+                            <span
+                              key={`${order._id}-${chip}`}
+                              className="rounded-full border border-slate-500/60 bg-[linear-gradient(135deg,rgba(148,163,184,0.2)_0%,rgba(30,41,59,0.45)_40%,rgba(15,23,42,0.72)_100%)] px-2.5 py-0.5 text-[11px] uppercase tracking-wide text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_4px_10px_rgba(2,6,23,0.35)]"
+                            >
+                              {chip}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                          </>
+                        );
+                      })()}
                     </div>
                   ))
                 )}
@@ -304,7 +443,7 @@ const RecognizeCustomer: React.FC = () => {
                 <div key={item._id} className="rounded-xl border border-slate-600/50 bg-slate-950/30 p-4 transition hover:border-slate-400/60">
                   <div className="mb-2 flex items-start justify-between">
                     <h4 className="text-xl font-semibold text-slate-100">{item.name}</h4>
-                    <span className="text-2xl font-bold text-blue-300">${item.price}</span>
+                    <span className="text-2xl font-bold text-blue-300">{formatInr(item.price)}</span>
                   </div>
                   <p className="mb-2 text-base text-slate-300">{item.description}</p>
                   <div className="flex flex-wrap gap-1">

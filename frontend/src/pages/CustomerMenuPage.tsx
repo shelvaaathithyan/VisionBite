@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, Minus, Plus, ShoppingCart, User } from 'lucide-react';
 import { customerService, foodService, orderService } from '../services/api';
 import { FoodItem } from '../types/customer';
+import { detectFaceWithExpression, loadModels, startWebcam, stopWebcam } from '../utils/faceDetection';
 
 const categories: Array<FoodItem['category'] | 'all'> = [
   'all',
@@ -30,9 +30,9 @@ const inrFormatter = new Intl.NumberFormat('en-IN', {
 
 const formatInr = (amount: number) => inrFormatter.format(amount);
 
-const CustomerMenuPage: React.FC = () => {
-  const { id: customerId } = useParams<{ id: string }>();
+const CUSTOMER_RECOGNITION_INTERVAL = 2200;
 
+const CustomerMenuPage: React.FC = () => {
   const metallicCardClass =
     'rounded-2xl border border-slate-500/35 bg-[linear-gradient(135deg,rgba(148,163,184,0.18)_0%,rgba(30,41,59,0.55)_35%,rgba(15,23,42,0.85)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-1px_0_rgba(148,163,184,0.18),0_14px_30px_rgba(2,6,23,0.45)] backdrop-blur-sm';
 
@@ -44,6 +44,9 @@ const CustomerMenuPage: React.FC = () => {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [recognizedCustomer, setRecognizedCustomer] = useState<RecognizedCustomer | null>(null);
   const [personalizedItems, setPersonalizedItems] = useState<FoodItem[]>([]);
+  const trackingVideoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const trackingIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     const loadMenu = async () => {
@@ -62,36 +65,70 @@ const CustomerMenuPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const loadCustomer = async () => {
-      if (!customerId) {
-        setMessage({ type: 'error', text: 'Customer ID is missing in route.' });
-        setRecognizedCustomer(null);
-        return;
-      }
-
+    const startAutoRecognition = async () => {
       try {
-        const response = await customerService.getCustomerById(customerId);
-        const customer = response.data?.customer;
-        if (!customer?.id) {
-          setRecognizedCustomer(null);
-          setMessage({ type: 'error', text: 'Customer not found.' });
+        await loadModels({ preferHighAccuracy: true });
+
+        if (!trackingVideoRef.current) {
           return;
         }
 
-        setRecognizedCustomer({
-          id: customer.id,
-          name: customer.name,
-          preferences: customer.preferences || [],
-          dietaryRestrictions: customer.dietaryRestrictions || [],
-        });
-      } catch (error: any) {
-        setRecognizedCustomer(null);
-        setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to load customer details' });
+        const stream = await startWebcam(trackingVideoRef.current);
+        streamRef.current = stream;
+
+        trackingIntervalRef.current = window.setInterval(async () => {
+          if (!trackingVideoRef.current || trackingVideoRef.current.readyState !== 4 || recognizedCustomer) {
+            return;
+          }
+
+          const detection = await detectFaceWithExpression(trackingVideoRef.current, {
+            highAccuracy: true,
+          });
+
+          if (!detection) {
+            return;
+          }
+
+          try {
+            const response = await customerService.recognizeCustomer(Array.from(detection.descriptor));
+            const customer = response.data?.customer;
+
+            if (customer?.id) {
+              setRecognizedCustomer({
+                id: customer.id,
+                name: customer.name,
+                preferences: customer.preferences || [],
+                dietaryRestrictions: customer.dietaryRestrictions || [],
+              });
+              setMessage({ type: '', text: '' });
+
+              if (trackingIntervalRef.current) {
+                window.clearInterval(trackingIntervalRef.current);
+                trackingIntervalRef.current = null;
+              }
+              stopWebcam(streamRef.current);
+              streamRef.current = null;
+            }
+          } catch {
+            // Keep scanning silently until a customer face is recognized.
+          }
+        }, CUSTOMER_RECOGNITION_INTERVAL);
+      } catch {
+        setMessage({ type: 'error', text: 'Unable to access camera for face recognition.' });
       }
     };
 
-    loadCustomer();
-  }, [customerId]);
+    startAutoRecognition();
+
+    return () => {
+      if (trackingIntervalRef.current) {
+        window.clearInterval(trackingIntervalRef.current);
+        trackingIntervalRef.current = null;
+      }
+      stopWebcam(streamRef.current);
+      streamRef.current = null;
+    };
+  }, [recognizedCustomer]);
 
   useEffect(() => {
     if (!recognizedCustomer || !recognizedCustomer.id) {
@@ -190,6 +227,7 @@ const CustomerMenuPage: React.FC = () => {
       style={{ fontFamily: 'BebasNeue, sans-serif' }}
     >
       <div className="absolute inset-0 bg-black" />
+      <video ref={trackingVideoRef} className="hidden" autoPlay muted playsInline />
       <div className="relative z-10 mx-auto w-full max-w-[86rem] px-4 pt-6 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl shadow-slate-950/40 backdrop-blur-sm">
           <video
@@ -364,6 +402,12 @@ const CustomerMenuPage: React.FC = () => {
                   }`}
                 >
                   {message.text}
+                </div>
+              )}
+
+              {!recognizedCustomer && !message.text && (
+                <div className="rounded-lg border border-blue-400/35 bg-blue-500/15 p-3 text-sm text-blue-100">
+                  Scanning for enrolled customer face...
                 </div>
               )}
             </div>
