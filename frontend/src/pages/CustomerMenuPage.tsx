@@ -1,13 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { Camera, Minus, Plus, ShoppingCart, User } from 'lucide-react';
 import { customerService, foodService, orderService } from '../services/api';
 import { FoodItem } from '../types/customer';
-import {
-  detectFaceWithExpression,
-  loadModels,
-  startWebcam,
-  stopWebcam,
-} from '../utils/faceDetection';
 
 const categories: Array<FoodItem['category'] | 'all'> = [
   'all',
@@ -26,9 +21,18 @@ type RecognizedCustomer = {
   dietaryRestrictions: string[];
 };
 
-const CUSTOMER_RECOGNITION_INTERVAL = 2200;
+const inrFormatter = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatInr = (amount: number) => inrFormatter.format(amount);
 
 const CustomerMenuPage: React.FC = () => {
+  const { id: customerId } = useParams<{ id: string }>();
+
   const metallicCardClass =
     'rounded-2xl border border-slate-500/35 bg-[linear-gradient(135deg,rgba(148,163,184,0.18)_0%,rgba(30,41,59,0.55)_35%,rgba(15,23,42,0.85)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-1px_0_rgba(148,163,184,0.18),0_14px_30px_rgba(2,6,23,0.45)] backdrop-blur-sm';
 
@@ -37,13 +41,9 @@ const CustomerMenuPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<(typeof categories)[number]>('all');
   const [message, setMessage] = useState({ type: '', text: '' });
   const [cart, setCart] = useState<Map<string, number>>(new Map());
-  const [, setTrackingState] = useState<'initializing' | 'active' | 'blocked'>('initializing');
   const [placingOrder, setPlacingOrder] = useState(false);
   const [recognizedCustomer, setRecognizedCustomer] = useState<RecognizedCustomer | null>(null);
   const [personalizedItems, setPersonalizedItems] = useState<FoodItem[]>([]);
-  const trackingVideoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const trackingIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     const loadMenu = async () => {
@@ -62,65 +62,39 @@ const CustomerMenuPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const startAutoTracking = async () => {
-      try {
-        await loadModels({ preferHighAccuracy: true });
+    const loadCustomer = async () => {
+      if (!customerId) {
+        setMessage({ type: 'error', text: 'Customer ID is missing in route.' });
+        setRecognizedCustomer(null);
+        return;
+      }
 
-        if (!trackingVideoRef.current) {
-          setTrackingState('blocked');
+      try {
+        const response = await customerService.getCustomerById(customerId);
+        const customer = response.data?.customer;
+        if (!customer?.id) {
+          setRecognizedCustomer(null);
+          setMessage({ type: 'error', text: 'Customer not found.' });
           return;
         }
 
-        const stream = await startWebcam(trackingVideoRef.current);
-        streamRef.current = stream;
-        setTrackingState('active');
-
-        trackingIntervalRef.current = window.setInterval(async () => {
-          if (!trackingVideoRef.current || trackingVideoRef.current.readyState !== 4) {
-            return;
-          }
-
-          const detection = await detectFaceWithExpression(trackingVideoRef.current, {
-            highAccuracy: true,
-          });
-
-          if (!detection) {
-            return;
-          }
-
-          if (!recognizedCustomer) {
-            try {
-              const response = await customerService.recognizeCustomer(Array.from(detection.descriptor));
-              const data = response.data;
-              if (data?.customer?.id) {
-                setRecognizedCustomer({
-                  id: data.customer.id,
-                  name: data.customer.name,
-                  preferences: data.customer.preferences || [],
-                  dietaryRestrictions: data.customer.dietaryRestrictions || [],
-                });
-              }
-            } catch {}
-          }
-        }, CUSTOMER_RECOGNITION_INTERVAL);
-      } catch {
-        setTrackingState('blocked');
+        setRecognizedCustomer({
+          id: customer.id,
+          name: customer.name,
+          preferences: customer.preferences || [],
+          dietaryRestrictions: customer.dietaryRestrictions || [],
+        });
+      } catch (error: any) {
+        setRecognizedCustomer(null);
+        setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to load customer details' });
       }
     };
 
-    startAutoTracking();
-
-    return () => {
-      if (trackingIntervalRef.current) {
-        window.clearInterval(trackingIntervalRef.current);
-      }
-      stopWebcam(streamRef.current);
-      streamRef.current = null;
-    };
-  }, [recognizedCustomer]);
+    loadCustomer();
+  }, [customerId]);
 
   useEffect(() => {
-    if (!recognizedCustomer) {
+    if (!recognizedCustomer || !recognizedCustomer.id) {
       setPersonalizedItems([]);
       return;
     }
@@ -159,7 +133,7 @@ const CustomerMenuPage: React.FC = () => {
   }, [cart, items]);
 
   const totalAmount = useMemo(() => {
-    return cartItems.reduce((sum, row) => sum + row.item.price * row.quantity, 0).toFixed(2);
+    return cartItems.reduce((sum, row) => sum + row.item.price * row.quantity, 0);
   }, [cartItems]);
 
   const updateCart = (foodId: string, delta: number) => {
@@ -264,8 +238,7 @@ const CustomerMenuPage: React.FC = () => {
             </div>
           )}
 
-          <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-5">
-            <div className={`${metallicCardClass} p-4 lg:col-span-4`}>
+          <div className={`${metallicCardClass} mb-4 p-4`}>
               <h2 className="text-2xl font-semibold tracking-wide text-white">Browse Menu</h2>
               <div className="mt-3 flex flex-wrap gap-2">
                 {categories.map((category) => (
@@ -283,9 +256,67 @@ const CustomerMenuPage: React.FC = () => {
                   </button>
                 ))}
               </div>
+              <p className="mt-3 text-sm tracking-wide text-slate-300">
+                {cartItems.length} item{cartItems.length === 1 ? '' : 's'} in cart
+              </p>
             </div>
 
-            <div className="space-y-4 lg:col-span-1">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
+            <div>
+              {loading ? (
+                <div className="rounded-2xl border border-slate-700/60 bg-transparent p-8 text-center text-slate-300">
+                  Loading menu...
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                  {filteredItems.map((item) => (
+                    <article key={item._id} className="rounded-2xl border border-slate-700/60 bg-transparent p-4 shadow-xl shadow-slate-950/30">
+                      <div className="mb-2 flex items-start justify-between gap-3">
+                        <h3 className="text-lg font-semibold tracking-[0.1em] text-slate-100">{item.name}</h3>
+                        <span className="text-xl font-bold tracking-wide text-blue-300">{formatInr(item.price)}</span>
+                      </div>
+
+                      <p className="mb-3 text-base tracking-wide text-slate-300">{item.description}</p>
+
+                      <div className="mb-3 flex flex-wrap gap-1">
+                        <span className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-200">{item.category}</span>
+                        {item.isVegetarian && (
+                          <span className="rounded bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">Vegetarian</span>
+                        )}
+                        {item.isVegan && <span className="rounded bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">Vegan</span>}
+                        {item.isGlutenFree && (
+                          <span className="rounded bg-amber-500/20 px-2 py-1 text-xs text-amber-200">Gluten-Free</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="inline-flex items-center gap-2 rounded-lg border border-slate-700/70 px-2 py-1">
+                          <button
+                            type="button"
+                            onClick={() => updateCart(item._id, -1)}
+                            className="rounded p-1 text-slate-200 hover:bg-slate-800"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="w-6 text-center text-sm font-semibold text-slate-100">
+                            {cart.get(item._id) || 0}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateCart(item._id, 1)}
+                            className="rounded p-1 text-slate-200 hover:bg-slate-800"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4 lg:sticky lg:top-4">
               <div className={`${metallicCardClass} p-4`}>
                 <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold tracking-wide text-white">
                   <ShoppingCart size={18} />
@@ -299,28 +330,29 @@ const CustomerMenuPage: React.FC = () => {
                     {cartItems.map((row) => (
                       <div key={row.item._id} className="flex items-center justify-between text-sm">
                         <p className="max-w-[65%] truncate text-slate-200">{row.item.name} x {row.quantity}</p>
-                        <p className="font-semibold text-slate-100">${(row.item.price * row.quantity).toFixed(2)}</p>
+                        <p className="font-semibold text-slate-100">{formatInr(row.item.price * row.quantity)}</p>
                       </div>
                     ))}
 
-                    <div className="mt-3 border-t border-slate-700/70 pt-3">
-                      <div className="mb-3 flex items-center justify-between">
-                        <span className="font-semibold text-slate-100">Total</span>
-                        <span className="text-xl font-bold text-blue-300">${totalAmount}</span>
-                      </div>
-
-                      <button
-                        type="button"
-                        disabled={placingOrder || cartItems.length === 0}
-                        onClick={handlePlaceOrder}
-                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-3 font-semibold text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-slate-700"
-                      >
-                        <Camera size={18} />
-                        {placingOrder ? 'Placing Order...' : 'Place Order'}
-                      </button>
-                    </div>
                   </div>
                 )}
+
+                <div className="mt-3 border-t border-slate-700/70 pt-3">
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="font-semibold text-slate-100">Total</span>
+                    <span className="text-xl font-bold text-blue-300">{formatInr(totalAmount)}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={placingOrder || cartItems.length === 0}
+                    onClick={handlePlaceOrder}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-3 font-semibold text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-slate-700"
+                  >
+                    <Camera size={18} />
+                    {placingOrder ? 'Placing Order...' : 'Place Order'}
+                  </button>
+                </div>
               </div>
 
               {message.text && (
@@ -336,62 +368,9 @@ const CustomerMenuPage: React.FC = () => {
               )}
             </div>
           </div>
-
-          {loading ? (
-            <div className="rounded-2xl border border-slate-700/60 bg-transparent p-8 text-center text-slate-300">
-              Loading menu...
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-              {filteredItems.map((item) => (
-                <article key={item._id} className="rounded-2xl border border-slate-700/60 bg-transparent p-4 shadow-xl shadow-slate-950/30">
-                  <div className="mb-2 flex items-start justify-between gap-3">
-                    <h3 className="text-lg font-semibold tracking-[0.1em] text-slate-100">{item.name}</h3>
-                    <span className="text-xl font-bold tracking-wide text-blue-300">${item.price.toFixed(2)}</span>
-                  </div>
-
-                  <p className="mb-3 text-base tracking-wide text-slate-300">{item.description}</p>
-
-                  <div className="mb-3 flex flex-wrap gap-1">
-                    <span className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-200">{item.category}</span>
-                    {item.isVegetarian && (
-                      <span className="rounded bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">Vegetarian</span>
-                    )}
-                    {item.isVegan && <span className="rounded bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">Vegan</span>}
-                    {item.isGlutenFree && (
-                      <span className="rounded bg-amber-500/20 px-2 py-1 text-xs text-amber-200">Gluten-Free</span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="inline-flex items-center gap-2 rounded-lg border border-slate-700/70 px-2 py-1">
-                      <button
-                        type="button"
-                        onClick={() => updateCart(item._id, -1)}
-                        className="rounded p-1 text-slate-200 hover:bg-slate-800"
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span className="w-6 text-center text-sm font-semibold text-slate-100">
-                        {cart.get(item._id) || 0}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => updateCart(item._id, 1)}
-                        className="rounded p-1 text-slate-200 hover:bg-slate-800"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
         </section>
       </div>
 
-      <video ref={trackingVideoRef} className="hidden" autoPlay muted playsInline />
     </div>
   );
 };

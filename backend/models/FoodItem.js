@@ -20,6 +20,8 @@ const foodItemSchema = new mongoose.Schema(
     price: {
       type: Number,
       required: [true, 'Please provide price'],
+      min: [120, 'Price must be at least 120'],
+      max: [250, 'Price cannot exceed 250'],
     },
     image: {
       type: String,

@@ -22,6 +22,15 @@ const categories: Array<FoodItem['category'] | 'all'> = [
   'special',
 ];
 
+const inrFormatter = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatInr = (amount: number) => inrFormatter.format(amount);
+
 const UserMenuPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -154,7 +163,7 @@ const UserMenuPage: React.FC = () => {
   }, [cart, items]);
 
   const totalAmount = useMemo(() => {
-    return cartItems.reduce((sum, row) => sum + row.item.price * row.quantity, 0).toFixed(2);
+    return cartItems.reduce((sum, row) => sum + row.item.price * row.quantity, 0);
   }, [cartItems]);
 
   const updateCart = (foodId: string, delta: number) => {
@@ -274,7 +283,7 @@ const UserMenuPage: React.FC = () => {
                 <article key={item._id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="mb-2 flex items-start justify-between gap-3">
                     <h3 className="font-semibold text-slate-900">{item.name}</h3>
-                    <span className="text-lg font-bold text-blue-600">${item.price.toFixed(2)}</span>
+                    <span className="text-lg font-bold text-blue-600">{formatInr(item.price)}</span>
                   </div>
 
                   <p className="mb-3 text-sm text-slate-600">{item.description}</p>
@@ -347,14 +356,14 @@ const UserMenuPage: React.FC = () => {
                 {cartItems.map((row) => (
                   <div key={row.item._id} className="flex items-center justify-between text-sm">
                     <p className="max-w-[65%] truncate text-slate-700">{row.item.name} x {row.quantity}</p>
-                    <p className="font-semibold text-slate-900">${(row.item.price * row.quantity).toFixed(2)}</p>
+                    <p className="font-semibold text-slate-900">{formatInr(row.item.price * row.quantity)}</p>
                   </div>
                 ))}
 
                 <div className="mt-3 border-t border-slate-200 pt-3">
                   <div className="mb-3 flex items-center justify-between">
                     <span className="font-semibold text-slate-900">Total</span>
-                    <span className="text-xl font-bold text-blue-700">${totalAmount}</span>
+                    <span className="text-xl font-bold text-blue-700">{formatInr(totalAmount)}</span>
                   </div>
 
                   <button
@@ -392,7 +401,7 @@ const UserMenuPage: React.FC = () => {
                 {moodHistoryOrders.slice(0, 4).map((order) => (
                   <div key={order._id} className="rounded border border-slate-200 p-2 text-sm">
                     <p className="font-medium text-slate-700">{new Date(order.createdAt).toLocaleDateString()}</p>
-                    <p className="text-slate-600">{order.items.length} items - ${order.totalAmount.toFixed(2)}</p>
+                    <p className="text-slate-600">{order.items.length} items - {formatInr(order.totalAmount)}</p>
                   </div>
                 ))}
               </div>
@@ -410,7 +419,7 @@ const UserMenuPage: React.FC = () => {
                 {similarProducts.map((item) => (
                   <div key={item._id} className="rounded border border-slate-200 p-2 text-sm">
                     <p className="font-medium text-slate-700">{item.name}</p>
-                    <p className="text-slate-600">${item.price.toFixed(2)} • {item.category}</p>
+                    <p className="text-slate-600">{formatInr(item.price)} • {item.category}</p>
                   </div>
                 ))}
               </div>

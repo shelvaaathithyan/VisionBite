@@ -150,7 +150,7 @@ export const LoginPage: React.FC = () => {
             <p className="text-center text-gray-300 tracking-wide">
               Don't have an account?{' '}
               <Link to="/register" className="text-gray-100 hover:text-white transition">
-                Register here (User/Staff)
+                Create Staff ID
               </Link>
             </p>
           </div>

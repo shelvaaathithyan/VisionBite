@@ -9,8 +9,6 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'staff' | 'user'>('user');
-  const [registeredRole, setRegisteredRole] = useState<'staff' | 'user'>('user');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -22,7 +20,7 @@ export const RegisterPage: React.FC = () => {
 
   useEffect(() => {
     if (vantaRef.current) {
-      vantaEffectRef.current = NET({
+      const netOptions: any = {
         el: vantaRef.current,
         THREE,
         mouseControls: true,
@@ -32,11 +30,14 @@ export const RegisterPage: React.FC = () => {
         minWidth: 200,
         scale: 1,
         scaleMobile: 1,
-        color: 0x290cd3,
+        color: 0xb8b8b8,
+        backgroundColor: 0x000000,
         points: 9,
         maxDistance: 22,
         spacing: 17,
-      });
+      };
+
+      vantaEffectRef.current = NET(netOptions);
     }
 
     return () => {
@@ -52,9 +53,7 @@ export const RegisterPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const selectedRole = role;
-      await register(name, email, password, confirmPassword, selectedRole);
-      setRegisteredRole(selectedRole);
+      await register(name, email, password, confirmPassword, 'staff');
       setSuccess(true);
       setName('');
       setEmail('');
@@ -62,7 +61,7 @@ export const RegisterPage: React.FC = () => {
       setConfirmPassword('');
       setTimeout(() => navigate('/login'), 3000);
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      setError(err.message || 'Staff registration failed');
     } finally {
       setLoading(false);
     }
@@ -70,27 +69,25 @@ export const RegisterPage: React.FC = () => {
 
   if (success) {
     return (
-      <div 
-        ref={vantaRef} 
-        className="min-h-screen flex items-center justify-center p-4 relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
+      <div
+        ref={vantaRef}
+        className="min-h-screen flex items-center justify-center p-4 relative bg-black"
       >
-        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0 bg-black/55"></div>
         <div className="w-full max-w-md relative z-10">
-          <div className="bg-white rounded-3xl shadow-2xl p-8">
+          <div className="login-metallic-card rounded-3xl shadow-2xl p-8">
             <div className="text-center">
-              <div className="mb-4 text-7xl">✓</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">Registration Successful!</h2>
-              <p className="text-gray-600 mb-4">
-                {registeredRole === 'staff'
-                  ? 'Your staff account has been created and is pending admin approval.'
-                  : 'Your user account has been created successfully.'}
+              <div className="mb-4 text-7xl text-gray-100">✓</div>
+              <h2 className="text-4xl tracking-wide text-gray-100 mb-3">Staff ID Created</h2>
+              <p className="text-gray-300 tracking-wide mb-4">
+                Your staff account is pending admin approval.
               </p>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-sm text-gray-400 tracking-wide mb-6">
                 Redirecting to login in a few seconds...
               </p>
               <Link
                 to="/login"
-                className="inline-block bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:from-indigo-700 hover:to-blue-700 transition shadow-lg hover:shadow-indigo-500/50 transform hover:scale-105"
+                className="inline-block bg-gradient-to-r from-zinc-300 via-gray-400 to-zinc-200 text-black text-2xl tracking-wide py-3 px-8 rounded-lg hover:from-zinc-100 hover:via-gray-200 hover:to-zinc-100 transition duration-300 shadow-lg shadow-gray-900/40"
               >
                 Go to Login
               </Link>
@@ -102,47 +99,31 @@ export const RegisterPage: React.FC = () => {
   }
 
   return (
-    <div 
-      ref={vantaRef} 
-      className="min-h-screen flex items-center justify-center p-4 relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
+    <div
+      ref={vantaRef}
+      className="min-h-screen flex items-center justify-center p-4 relative bg-black"
     >
-      {/* Overlay for better readability */}
-      <div className="absolute inset-0 bg-black/20"></div>
+      <div className="absolute inset-0 bg-black/55"></div>
 
       <div className="w-full max-w-md relative z-10">
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
+        <div className="login-metallic-card rounded-3xl shadow-2xl p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-black text-gray-900 mb-1">VisionBite</h1>
-            <p className="text-indigo-600 font-semibold">Authentication System</p>
+            <h1 className="text-4xl tracking-wide text-gray-100 mb-1">VisionBite</h1>
+            <p className="text-gray-400 tracking-wide">Authentication System</p>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">Create Account</h2>
-          <p className="text-center text-gray-600 mb-6">Register as customer user or staff member</p>
+          <h2 className="text-4xl tracking-wide text-gray-100 mb-2 text-center">Create Staff ID</h2>
+          <p className="text-center text-gray-300 tracking-wide mb-6">Staff registration only</p>
 
           {error && (
-            <div className="mb-4 p-4 rounded-xl bg-red-50 border-2 border-red-300 text-red-800">
+            <div className="mb-4 p-4 rounded-xl border bg-red-50 border-red-300 text-red-800">
               <p className="text-sm font-medium">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="role" className="block text-gray-700 font-semibold mb-2">
-                Account Type
-              </label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value as 'staff' | 'user')}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 transition"
-              >
-                <option value="user">User (Menu + Place Orders)</option>
-                <option value="staff">Staff (Needs Admin Approval)</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="name" className="block text-gray-700 font-semibold mb-2">
+              <label htmlFor="name" className="block text-gray-300 tracking-wide mb-2">
                 Full Name
               </label>
               <input
@@ -150,14 +131,14 @@ export const RegisterPage: React.FC = () => {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 transition"
-                placeholder="John Doe"
+                className="w-full px-4 py-3 border border-gray-500/60 rounded-lg bg-gradient-to-b from-zinc-500/40 to-zinc-800/70 text-white placeholder:text-gray-300 focus:outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-400/40 transition"
+                placeholder="Enter staff name"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-gray-700 font-semibold mb-2">
+              <label htmlFor="email" className="block text-gray-300 tracking-wide mb-2">
                 Email Address
               </label>
               <input
@@ -165,14 +146,14 @@ export const RegisterPage: React.FC = () => {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 transition"
-                placeholder="you@example.com"
+                className="w-full px-4 py-3 border border-gray-500/60 rounded-lg bg-gradient-to-b from-zinc-500/40 to-zinc-800/70 text-white placeholder:text-gray-300 focus:outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-400/40 transition"
+                placeholder="Enter staff email"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-gray-700 font-semibold mb-2">
+              <label htmlFor="password" className="block text-gray-300 tracking-wide mb-2">
                 Password
               </label>
               <input
@@ -180,14 +161,14 @@ export const RegisterPage: React.FC = () => {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 transition"
-                placeholder="Enter your password"
+                className="w-full px-4 py-3 border border-gray-500/60 rounded-lg bg-gradient-to-b from-zinc-500/40 to-zinc-800/70 text-white placeholder:text-gray-300 focus:outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-400/40 transition"
+                placeholder="Enter password"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-gray-700 font-semibold mb-2">
+              <label htmlFor="confirmPassword" className="block text-gray-300 tracking-wide mb-2">
                 Confirm Password
               </label>
               <input
@@ -195,8 +176,8 @@ export const RegisterPage: React.FC = () => {
                 id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 transition"
-                placeholder="Confirm your password"
+                className="w-full px-4 py-3 border border-gray-500/60 rounded-lg bg-gradient-to-b from-zinc-500/40 to-zinc-800/70 text-white placeholder:text-gray-300 focus:outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-400/40 transition"
+                placeholder="Confirm password"
                 required
               />
             </div>
@@ -204,16 +185,16 @@ export const RegisterPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-blue-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-indigo-500/50 transform hover:scale-105 mt-6"
+              className="w-full bg-gradient-to-r from-zinc-300 via-gray-400 to-zinc-200 text-black text-2xl tracking-wide py-3 px-4 rounded-lg hover:from-zinc-100 hover:via-gray-200 hover:to-zinc-100 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-gray-900/40 transform hover:scale-[1.02] mt-6"
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? 'Creating Staff ID...' : 'Create Staff ID'}
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-center text-gray-600">
+          <div className="mt-6 pt-6 border-t border-gray-700/80">
+            <p className="text-center text-gray-300 tracking-wide">
               Already have an account?{' '}
-              <Link to="/login" className="text-indigo-600 font-semibold hover:text-indigo-700 transition">
+              <Link to="/login" className="text-gray-100 hover:text-white transition">
                 Login here
               </Link>
             </p>
