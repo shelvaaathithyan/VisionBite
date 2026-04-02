@@ -372,7 +372,7 @@ const LiveCafeInsights: React.FC = () => {
                   </span>
                   <span className="inline-flex items-center gap-2">
                     <UtensilsCrossed size={16} />
-                    Eating: <span className="text-slate-100">{customer.latestFood}</span>
+                    Currently Placed Order: <span className="text-slate-100">{customer.latestFood}</span>
                   </span>
                 </div>
               </div>

@@ -7,6 +7,7 @@ import { FaceRecognitionResult, FoodItem, GroupFaceRecognitionResponse } from '.
 interface CapturedFaceInput {
   descriptor: number[];
   emotion: string;
+  previewImage?: string;
 }
 
 interface GroupRecognitionCard {
@@ -19,6 +20,7 @@ interface UnknownFace {
   index: number;
   descriptor: number[];
   emotion: string;
+  previewImage?: string;
 }
 
 interface UnknownFaceForm {
@@ -98,7 +100,7 @@ const getLegacyFallback = (price: number) => {
   return LEGACY_ORDER_PRICE_MAP[price.toFixed(2)] || null;
 };
 
-const getOrderItemChips = (order: any) => {
+const getOrderItemChips = (order: any): string[] => {
   const items = Array.isArray(order?.items) ? order.items : [];
 
   return items
@@ -208,6 +210,7 @@ const RecognizeCustomer: React.FC = () => {
           index,
           descriptor: faces[index].descriptor,
           emotion: faces[index].emotion,
+          previewImage: faces[index].previewImage,
         }));
 
       setUnknownFaces(unmatchedFaces);
@@ -410,7 +413,7 @@ const RecognizeCustomer: React.FC = () => {
                       </p>
                       {itemChips.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1.5">
-                          {itemChips.map((chip) => (
+                          {itemChips.map((chip: string) => (
                             <span
                               key={`${order._id}-${chip}`}
                               className="rounded-full border border-slate-500/60 bg-[linear-gradient(135deg,rgba(148,163,184,0.2)_0%,rgba(30,41,59,0.45)_40%,rgba(15,23,42,0.72)_100%)] px-2.5 py-0.5 text-[11px] uppercase tracking-wide text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_4px_10px_rgba(2,6,23,0.35)]"
@@ -486,6 +489,16 @@ const RecognizeCustomer: React.FC = () => {
                       Mood: {unknownFace.emotion}
                     </span>
                   </div>
+
+                  {unknownFace.previewImage && (
+                    <div className="mb-3 overflow-hidden rounded-lg border border-amber-300/45 bg-slate-950/60">
+                      <img
+                        src={unknownFace.previewImage}
+                        alt={`Face preview ${unknownFace.index + 1}`}
+                        className="h-52 w-full object-contain bg-black/30"
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <input

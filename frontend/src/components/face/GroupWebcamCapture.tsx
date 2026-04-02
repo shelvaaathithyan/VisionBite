@@ -15,6 +15,7 @@ import {
 interface CapturedFace {
   descriptor: number[];
   emotion: string;
+  previewImage?: string;
 }
 
 interface GroupWebcamCaptureProps {
@@ -159,12 +160,64 @@ const GroupWebcamCapture: React.FC<GroupWebcamCaptureProps> = ({ onCapture, onCl
       const faces: CapturedFace[] = detections.map((detection) => ({
         descriptor: Array.from(detection.descriptor),
         emotion: getDominantEmotion(detection.expressions),
+        previewImage: getFacePreviewFromDetection(videoRef.current!, detection),
       }));
 
       onCapture(faces);
     } catch (err: any) {
       setError(err.message || 'Failed to capture group');
     }
+  };
+
+  const getFacePreviewFromDetection = (video: HTMLVideoElement, detection: any): string | undefined => {
+    const box = detection?.detection?.box;
+    if (!box) {
+      return undefined;
+    }
+
+    const frameWidth = video.videoWidth;
+    const frameHeight = video.videoHeight;
+    if (!frameWidth || !frameHeight) {
+      return undefined;
+    }
+
+    // Use a larger square crop around face bounds so full face/head is visible.
+    const padding = 0.55;
+    const boxCenterX = box.x + box.width / 2;
+    const boxCenterY = box.y + box.height / 2;
+    const side = Math.max(box.width, box.height) * (1 + padding * 2);
+
+    let cropX = Math.floor(boxCenterX - side / 2);
+    let cropY = Math.floor(boxCenterY - side / 2);
+    let cropWidth = Math.floor(side);
+    let cropHeight = Math.floor(side);
+
+    if (cropX < 0) {
+      cropWidth += cropX;
+      cropX = 0;
+    }
+    if (cropY < 0) {
+      cropHeight += cropY;
+      cropY = 0;
+    }
+
+    cropWidth = Math.min(cropWidth, frameWidth - cropX);
+    cropHeight = Math.min(cropHeight, frameHeight - cropY);
+
+    if (cropWidth <= 0 || cropHeight <= 0) {
+      return undefined;
+    }
+
+    const snapshot = document.createElement('canvas');
+    snapshot.width = cropWidth;
+    snapshot.height = cropHeight;
+    const context = snapshot.getContext('2d');
+    if (!context) {
+      return undefined;
+    }
+
+    context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+    return snapshot.toDataURL('image/jpeg', 0.85);
   };
 
   const cleanup = () => {

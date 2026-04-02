@@ -9,14 +9,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [token, setToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  const clearStoredAuth = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  };
+
   // Load user from localStorage on mount
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
-    if (savedToken && savedUser) {
+
+    if (!savedToken || !savedUser) {
+      clearStoredAuth();
+      return;
+    }
+
+    try {
+      const parsedUser = JSON.parse(savedUser) as User;
       setToken(savedToken);
-      setUser(JSON.parse(savedUser));
+      setUser(parsedUser);
       setIsAuthenticated(true);
+    } catch {
+      setToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
+      clearStoredAuth();
     }
   }, []);
 
@@ -57,8 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     setToken(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearStoredAuth();
   };
 
   const value: AuthContextType = {

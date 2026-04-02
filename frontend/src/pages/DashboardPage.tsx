@@ -56,7 +56,7 @@ const PulseIcon = () => (
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [loadingPending, setLoadingPending] = useState(false);
   const [loadingApproved, setLoadingApproved] = useState(false);
@@ -217,7 +217,10 @@ export const DashboardPage: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate('/login')}
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
             className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-xl font-semibold tracking-[0.045em] text-slate-200 transition hover:bg-slate-700"
           >
             Go to Login

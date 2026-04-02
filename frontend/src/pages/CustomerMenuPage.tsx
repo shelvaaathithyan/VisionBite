@@ -48,6 +48,12 @@ const CustomerMenuPage: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const trackingIntervalRef = useRef<number | null>(null);
 
+  const resetForNextCustomer = () => {
+    setRecognizedCustomer(null);
+    setPersonalizedItems([]);
+    setMessage({ type: '', text: '' });
+  };
+
   useEffect(() => {
     const loadMenu = async () => {
       try {
@@ -214,6 +220,10 @@ const CustomerMenuPage: React.FC = () => {
           : 'Order placed successfully.',
       });
       setCart(new Map());
+
+      window.setTimeout(() => {
+        resetForNextCustomer();
+      }, 1500);
     } catch (error: any) {
       setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to place order' });
     } finally {
