@@ -33,10 +33,13 @@ export interface OrderItem {
 
 export interface Order {
   _id: string;
+  queueToken?: number;
   customer: Customer;
   items: OrderItem[];
   totalAmount: number;
-  status: 'pending' | 'preparing' | 'ready' | 'served' | 'completed' | 'cancelled';
+  status: 'awaiting_approval' | 'pending' | 'preparing' | 'ready' | 'served' | 'completed' | 'cancelled' | 'rejected';
+  customerNotification?: string;
+  rejectionReason?: string;
   detectedMood?: string;
   notes?: string;
   servedBy: any;

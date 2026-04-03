@@ -65,11 +65,16 @@ export const foodService = {
 export const orderService = {
   createOrder: (data: any) => api.post('/orders', data),
   getAllOrders: (params?: any) => api.get('/orders', { params }),
+  deleteAllOrders: () => api.delete('/orders'),
+  clearAllOrders: () => api.post('/orders/clear-all'),
   getMoodInsights: (emotion: string) => api.get('/orders/mood-insights', { params: { emotion } }),
   getOrderById: (id: string) => api.get(`/orders/${id}`),
-  updateOrderStatus: (id: string, status: string) =>
-    api.put(`/orders/${id}/status`, { status }),
+  deleteOrderById: (id: string) => api.delete(`/orders/${id}`),
+  updateOrderStatus: (id: string, status: string, rejectionReason?: string) =>
+    api.put(`/orders/${id}/status`, { status, rejectionReason }),
   getCustomerOrders: (customerId: string) => api.get(`/orders/customer/${customerId}`),
+  getPublicCustomerOrders: (customerId: string, limit = 10) =>
+    api.get(`/orders/public/customer/${customerId}`, { params: { limit } }),
 };
 
 export default api;

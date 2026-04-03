@@ -7,6 +7,7 @@ export interface KPIItem {
   value: string | number;
   subtitle?: string;
   icon: React.ReactNode;
+  onClick?: () => void;
 }
 
 interface KPICardsProps {
@@ -19,11 +20,26 @@ export const KPICards: React.FC<KPICardsProps> = ({ items }) => {
       {items.map((item, index) => (
         <motion.article
           key={item.id}
-          className="group relative overflow-hidden rounded-lg border border-slate-600/40 bg-gradient-to-br from-slate-700/50 via-slate-800/50 to-slate-900/60 p-4 backdrop-blur-md shadow-xl shadow-slate-950/40 transition-all hover:border-slate-500/60 hover:shadow-lg hover:shadow-blue-500/5"
+          className={`group relative overflow-hidden rounded-lg border border-slate-600/40 bg-gradient-to-br from-slate-700/50 via-slate-800/50 to-slate-900/60 p-4 backdrop-blur-md shadow-xl shadow-slate-950/40 transition-all hover:border-slate-500/60 hover:shadow-lg hover:shadow-blue-500/5 ${
+            item.onClick ? 'cursor-pointer' : ''
+          }`}
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.05 + index * 0.05 }}
           whileHover={{ scale: 1.02, y: -2 }}
+          onClick={item.onClick}
+          role={item.onClick ? 'button' : undefined}
+          tabIndex={item.onClick ? 0 : undefined}
+          onKeyDown={(event) => {
+            if (!item.onClick) {
+              return;
+            }
+
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              item.onClick();
+            }
+          }}
         >
           {/* Metallic highlight overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />

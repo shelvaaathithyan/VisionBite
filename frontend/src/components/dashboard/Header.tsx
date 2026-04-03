@@ -11,11 +11,6 @@ export const Header: React.FC<HeaderProps> = ({ username, role }) => {
   const navigate = useNavigate();
   const isAdmin = role === 'admin';
 
-  const roleStyles =
-    role === 'admin'
-      ? 'bg-purple-500/20 text-purple-200 border-purple-400/30'
-      : 'bg-sky-500/20 text-sky-200 border-sky-400/30';
-
   return (
     <header className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-xl shadow-slate-950/40 backdrop-blur-sm sm:p-6">
       {isAdmin && (

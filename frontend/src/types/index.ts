@@ -45,3 +45,44 @@ export interface PendingUsersResponse {
   count: number;
   users: PendingUser[];
 }
+
+export type OrderStatus =
+  | 'awaiting_approval'
+  | 'pending'
+  | 'preparing'
+  | 'ready'
+  | 'served'
+  | 'completed'
+  | 'cancelled'
+  | 'rejected';
+
+export interface DashboardOrderItem {
+  foodItem?: {
+    _id?: string;
+    name?: string;
+  };
+  quantity: number;
+  price: number;
+}
+
+export interface DashboardOrder {
+  _id: string;
+  queueToken?: number;
+  status: OrderStatus;
+  customerNotification?: string;
+  rejectionReason?: string;
+  totalAmount: number;
+  createdAt: string;
+  customer?: {
+    _id?: string;
+    name?: string;
+    phone?: string;
+    email?: string;
+  };
+  userAccount?: {
+    _id?: string;
+    name?: string;
+    email?: string;
+  };
+  items: DashboardOrderItem[];
+}

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, Minus, Plus, ShoppingCart, User } from 'lucide-react';
 import { customerService, foodService, orderService } from '../services/api';
-import { FoodItem } from '../types/customer';
+import { FoodItem, Order } from '../types/customer';
 import { detectFaceWithExpression, loadModels, startWebcam, stopWebcam } from '../utils/faceDetection';
 
 const categories: Array<FoodItem['category'] | 'all'> = [
@@ -31,6 +31,7 @@ const inrFormatter = new Intl.NumberFormat('en-IN', {
 const formatInr = (amount: number) => inrFormatter.format(amount);
 
 const CUSTOMER_RECOGNITION_INTERVAL = 2200;
+const ORDER_POLLING_INTERVAL = 6000;
 
 const CustomerMenuPage: React.FC = () => {
   const metallicCardClass =
@@ -44,15 +45,12 @@ const CustomerMenuPage: React.FC = () => {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [recognizedCustomer, setRecognizedCustomer] = useState<RecognizedCustomer | null>(null);
   const [personalizedItems, setPersonalizedItems] = useState<FoodItem[]>([]);
+  const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
+  const [latestOrderUpdate, setLatestOrderUpdate] = useState<Order | null>(null);
   const trackingVideoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const trackingIntervalRef = useRef<number | null>(null);
-
-  const resetForNextCustomer = () => {
-    setRecognizedCustomer(null);
-    setPersonalizedItems([]);
-    setMessage({ type: '', text: '' });
-  };
+  const orderPollingRef = useRef<number | null>(null);
 
   useEffect(() => {
     const loadMenu = async () => {
@@ -131,8 +129,52 @@ const CustomerMenuPage: React.FC = () => {
         window.clearInterval(trackingIntervalRef.current);
         trackingIntervalRef.current = null;
       }
+      if (orderPollingRef.current) {
+        window.clearInterval(orderPollingRef.current);
+        orderPollingRef.current = null;
+      }
       stopWebcam(streamRef.current);
       streamRef.current = null;
+    };
+  }, [recognizedCustomer]);
+
+  useEffect(() => {
+    const fetchCustomerOrders = async (customerId: string) => {
+      try {
+        const response = await orderService.getPublicCustomerOrders(customerId, 10);
+        const orders = (response.data?.orders || []) as Order[];
+        setCustomerOrders(orders);
+
+        setLatestOrderUpdate(orders[0] || null);
+      } catch {
+        setCustomerOrders([]);
+        setLatestOrderUpdate(null);
+      }
+    };
+
+    if (!recognizedCustomer?.id) {
+      if (orderPollingRef.current) {
+        window.clearInterval(orderPollingRef.current);
+        orderPollingRef.current = null;
+      }
+      return;
+    }
+
+    fetchCustomerOrders(recognizedCustomer.id);
+
+    if (orderPollingRef.current) {
+      window.clearInterval(orderPollingRef.current);
+    }
+
+    orderPollingRef.current = window.setInterval(() => {
+      fetchCustomerOrders(recognizedCustomer.id);
+    }, ORDER_POLLING_INTERVAL);
+
+    return () => {
+      if (orderPollingRef.current) {
+        window.clearInterval(orderPollingRef.current);
+        orderPollingRef.current = null;
+      }
     };
   }, [recognizedCustomer]);
 
@@ -208,22 +250,31 @@ const CustomerMenuPage: React.FC = () => {
         quantity: row.quantity,
       }));
 
-      await orderService.createOrder({
+      const response = await orderService.createOrder({
         customerId: recognizedCustomer?.id,
         items: payloadItems,
       });
 
+      const createdOrder = response.data?.order as Order | undefined;
+      if (createdOrder?._id) {
+        setLatestOrderUpdate(createdOrder);
+      }
+
       setMessage({
         type: 'success',
-        text: recognizedCustomer?.name
-          ? `Order placed successfully for ${recognizedCustomer.name}.`
-          : 'Order placed successfully.',
+        text:
+          recognizedCustomer?.name
+            ? `Order submitted for ${recognizedCustomer.name}. Token will be assigned after admin approval.`
+            : 'Order submitted. Token will be assigned after admin approval.',
       });
       setCart(new Map());
 
-      window.setTimeout(() => {
-        resetForNextCustomer();
-      }, 1500);
+      if (recognizedCustomer?.id) {
+        const latestOrders = await orderService.getPublicCustomerOrders(recognizedCustomer.id, 10);
+        const orders = (latestOrders.data?.orders || []) as Order[];
+        setCustomerOrders(orders);
+        setLatestOrderUpdate(orders[0] || null);
+      }
     } catch (error: any) {
       setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to place order' });
     } finally {
@@ -283,6 +334,23 @@ const CustomerMenuPage: React.FC = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {recognizedCustomer && latestOrderUpdate && (
+            <div className="mb-4 rounded-2xl border border-blue-400/35 bg-transparent p-4 shadow-xl shadow-slate-950/30">
+              <h2 className="text-2xl font-semibold tracking-wide text-blue-100">
+                Live Order Notification
+              </h2>
+              <p className="mt-1 text-lg tracking-wide text-blue-200">
+                {latestOrderUpdate.customerNotification || 'Order submitted. Waiting for admin approval.'}
+              </p>
+              <p className="mt-2 text-sm tracking-wide text-slate-200">
+                {latestOrderUpdate.queueToken
+                  ? `Token #${latestOrderUpdate.queueToken}`
+                  : 'Token pending admin approval'}{' '}
+                • Status: {latestOrderUpdate.status.toUpperCase()}
+              </p>
             </div>
           )}
 
@@ -412,6 +480,16 @@ const CustomerMenuPage: React.FC = () => {
                   }`}
                 >
                   {message.text}
+                </div>
+              )}
+
+              {recognizedCustomer && customerOrders.length > 0 && (
+                <div className="rounded-lg border border-slate-700/60 bg-slate-900/40 p-3 text-sm text-slate-200">
+                  Latest token history:{' '}
+                  {customerOrders
+                    .slice(0, 3)
+                    .map((order) => (order.queueToken ? `#${order.queueToken}` : 'Pending approval'))
+                    .join(', ')}
                 </div>
               )}
 

@@ -32,10 +32,23 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    queueToken: {
+      type: Number,
+      min: 1,
+    },
     status: {
       type: String,
-      enum: ['pending', 'preparing', 'ready', 'served', 'completed', 'cancelled'],
-      default: 'pending',
+      enum: ['awaiting_approval', 'pending', 'preparing', 'ready', 'served', 'completed', 'cancelled', 'rejected'],
+      default: 'awaiting_approval',
+    },
+    customerNotification: {
+      type: String,
+      default: 'Order submitted. Waiting for admin approval.',
+      trim: true,
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
     },
     detectedMood: {
       type: String,

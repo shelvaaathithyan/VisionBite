@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { PrivateRoute, StaffRoute, UserOnlyRoute } from './components/ProtectedRoutes';
+import { AdminRoute, PrivateRoute, StaffRoute, UserOnlyRoute } from './components/ProtectedRoutes';
 import { AppLoadingScreen } from './components/AppLoadingScreen';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { StaffApprovalsPage } from './pages/StaffApprovalsPage';
 import VisionBitePage from './pages/VisionBitePage';
 import UserMenuPage from './pages/UserMenuPage';
 import CustomerMenuPage from './pages/CustomerMenuPage';
@@ -35,6 +36,14 @@ export const App: React.FC = () => {
               <StaffRoute>
                 <DashboardPage />
               </StaffRoute>
+            }
+          />
+          <Route
+            path="/staff-approvals"
+            element={
+              <AdminRoute>
+                <StaffApprovalsPage />
+              </AdminRoute>
             }
           />
           <Route

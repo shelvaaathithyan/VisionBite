@@ -2,6 +2,49 @@ import Order from '../models/Order.js';
 import Customer from '../models/Customer.js';
 import FoodItem from '../models/FoodItem.js';
 
+const getNextQueueToken = async () => {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(startOfDay);
+  endOfDay.setDate(endOfDay.getDate() + 1);
+
+  const todayCount = await Order.countDocuments({
+    createdAt: { $gte: startOfDay, $lt: endOfDay },
+    queueToken: { $exists: true, $ne: null },
+  });
+
+  return todayCount + 1;
+};
+
+const buildCustomerNotification = (status, queueToken, rejectionReason) => {
+  const tokenLabel = queueToken ? `Token ${queueToken}` : 'Your token';
+
+  switch (status) {
+    case 'awaiting_approval':
+      return 'Order submitted. Waiting for admin approval.';
+    case 'pending':
+      return queueToken
+        ? `Order approved. ${tokenLabel} has been assigned.`
+        : 'Order approved. Token will be assigned shortly.';
+    case 'preparing':
+      return `${tokenLabel} is being prepared`;
+    case 'ready':
+      return `${tokenLabel} is ready for pickup`;
+    case 'served':
+    case 'completed':
+      return `${tokenLabel} has been served`;
+    case 'cancelled':
+      return `${tokenLabel} was cancelled`;
+    case 'rejected':
+      return rejectionReason
+        ? `Order rejected: ${rejectionReason}`
+        : 'Order was rejected by admin';
+    default:
+      return 'Order submitted. Waiting for admin approval.';
+  }
+};
+
 // Create a new order
 export const createOrder = async (req, res) => {
   try {
@@ -28,7 +71,6 @@ export const createOrder = async (req, res) => {
     // Calculate total and validate items
     let totalAmount = 0;
     const orderItems = [];
-
     for (const item of items) {
       const foodItem = await FoodItem.findById(item.foodItemId);
       if (!foodItem) {
@@ -58,6 +100,8 @@ export const createOrder = async (req, res) => {
       userAccount: isUserOrder ? req.user.id : undefined,
       items: orderItems,
       totalAmount,
+      customerNotification: 'Order submitted. Waiting for admin approval.',
+      status: 'awaiting_approval',
       detectedMood,
       notes,
       servedBy: req.user?.id,
@@ -140,26 +184,67 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, rejectionReason } = req.body;
+    const isAdmin = req.user?.role === 'admin';
 
-    const validStatuses = ['pending', 'preparing', 'ready', 'served', 'completed', 'cancelled'];
+    const validStatuses = [
+      'awaiting_approval',
+      'pending',
+      'preparing',
+      'ready',
+      'served',
+      'completed',
+      'cancelled',
+      'rejected',
+    ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
+    const existingOrder = await Order.findById(id).select('queueToken status');
+    if (!existingOrder) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (
+      existingOrder.status === 'awaiting_approval' &&
+      ['pending', 'rejected'].includes(status) &&
+      !isAdmin
+    ) {
+      return res.status(403).json({ message: 'Only admin can approve or reject orders' });
+    }
+
+    if (status === 'rejected' && !isAdmin) {
+      return res.status(403).json({ message: 'Only admin can reject orders' });
+    }
+
+    if (status === 'rejected' && !String(rejectionReason || '').trim()) {
+      return res.status(400).json({ message: 'Rejection reason is required' });
+    }
+
+    let queueToken = existingOrder.queueToken;
+    if (status === 'pending' && existingOrder.status === 'awaiting_approval' && !queueToken) {
+      queueToken = await getNextQueueToken();
+    }
+
+    const rejectionReasonText =
+      status === 'rejected' ? String(rejectionReason || '').trim() : undefined;
+    const customerNotification = buildCustomerNotification(status, queueToken, rejectionReasonText);
+
     const order = await Order.findByIdAndUpdate(
       id,
-      { status },
+      {
+        status,
+        queueToken,
+        customerNotification,
+        rejectionReason: status === 'rejected' ? rejectionReasonText : undefined,
+      },
       { new: true }
     )
       .populate('customer', 'name phone email')
       .populate('userAccount', 'name email')
       .populate('items.foodItem')
       .populate('servedBy', 'name');
-
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
 
     res.status(200).json({
       message: 'Order status updated',
@@ -179,6 +264,26 @@ export const getCustomerOrders = async (req, res) => {
       .populate('items.foodItem')
       .populate('servedBy', 'name')
       .sort('-createdAt');
+
+    res.status(200).json({
+      count: orders.length,
+      orders,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Public customer order polling by recognized customer id
+export const getPublicCustomerOrders = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const limit = Math.min(Number(req.query.limit) || 10, 20);
+
+    const orders = await Order.find({ customer: customerId })
+      .populate('items.foodItem')
+      .sort('-createdAt')
+      .limit(limit);
 
     res.status(200).json({
       count: orders.length,
@@ -232,4 +337,49 @@ export const getUserMoodInsights = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
+};
+
+// Delete all orders (admin only)
+export const deleteAllOrders = async (req, res) => {
+  try {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admin can delete all orders' });
+    }
+
+    const result = await Order.deleteMany({});
+    return res.status(200).json({
+      message: 'All orders deleted successfully',
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete one order (admin/staff)
+export const deleteOrderById = async (req, res) => {
+  try {
+    if (req.user?.role === 'user') {
+      return res.status(403).json({ message: 'Users cannot delete orders' });
+    }
+
+    const { id } = req.params;
+    const order = await Order.findByIdAndDelete(id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    return res.status(200).json({
+      message: 'Order deleted successfully',
+      orderId: id,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// Fallback endpoint to clear all orders for environments where DELETE /orders is blocked
+export const clearAllOrders = async (req, res) => {
+  return deleteAllOrders(req, res);
 };
